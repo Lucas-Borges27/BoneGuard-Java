@@ -1,0 +1,105 @@
+package br.com.fiap.boneguard.service;
+
+import br.com.fiap.boneguard.entities.Avaliacao;
+import br.com.fiap.boneguard.enums.CategoriaPlano;
+import br.com.fiap.boneguard.repositories.AvaliacaoRepository;
+import br.com.fiap.boneguard.repositories.PacienteRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.support.ToolCallbacks;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.stereotype.Service;
+
+import java.util.stream.Collectors;
+
+@Service
+public class PlanoAIService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PlanoAIService.class);
+
+    private static final String SYSTEM_PROMPT = """
+            Você é um especialista em saúde óssea da missão BoneGuard, que aplica os protocolos
+            NASA para preservação óssea em microgravidade adaptados para pacientes terrestres.
+            Use as ferramentas disponíveis para buscar o perfil completo do paciente e o histórico
+            de avaliações antes de gerar o plano. Embase o plano nos protocolos NASA (ARED, CEVIS)
+            e personalize com base nos dados reais do paciente.
+            Responda em português do Brasil. Máximo 600 caracteres.
+            """;
+
+    private final ChatClient chatClient;
+    private final PacienteRepository pacienteRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
+
+    public PlanoAIService(ChatClient.Builder builder,
+                          PacienteRepository pacienteRepository,
+                          AvaliacaoRepository avaliacaoRepository) {
+        this.chatClient = builder.build();
+        this.pacienteRepository = pacienteRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
+    }
+
+    // ─── Tools disponíveis para o modelo ─────────────────────────────────────
+
+    @Tool(description = "Busca o perfil clínico completo do paciente dado seu ID: nome, idade, sexo, peso, nível de atividade, histórico familiar e dieta de cálcio")
+    public String buscarPerfilPaciente(Long pacienteId) {
+        return pacienteRepository.findById(pacienteId)
+                .map(p -> "Perfil — Nome: %s | Idade: %d | Sexo: %s | Peso: %.1f kg | Atividade: %s | Histórico familiar: %s | Cálcio na dieta: %s"
+                        .formatted(p.getNome(), p.getIdade(), p.getSexo(), p.getPeso(),
+                                p.getNivelAtividade(),
+                                Boolean.TRUE.equals(p.getHistoricoFamiliar()) ? "SIM" : "NÃO",
+                                Boolean.TRUE.equals(p.getAlimentacaoCalcio()) ? "SIM" : "NÃO"))
+                .orElse("Paciente não encontrado.");
+    }
+
+    @Tool(description = "Busca o histórico de avaliações de risco ósseo do paciente, retornando scores e classificações em ordem cronológica")
+    public String buscarHistoricoAvaliacoes(Long pacienteId) {
+        var avaliacoes = avaliacaoRepository.findByPacienteIdOrderByDataAvaliacaoDesc(pacienteId);
+        if (avaliacoes.isEmpty()) return "Nenhuma avaliação registrada para este paciente.";
+        return avaliacoes.stream()
+                .map(a -> "Data: %s | Score: %.1f | Classificação: %s"
+                        .formatted(a.getDataAvaliacao(), a.getScoreRisco(), a.getClassificacao()))
+                .collect(Collectors.joining("\n"));
+    }
+
+    @Tool(description = "Retorna os protocolos NASA de preservação óssea para a categoria especificada: EXERCICIO ou NUTRICAO")
+    public String buscarProtocoloNASA(String categoria) {
+        if ("EXERCICIO".equalsIgnoreCase(categoria)) {
+            return """
+                    Protocolo NASA-ARED (Advanced Resistive Exercise Device):
+                    - Exercícios de resistência gravitacional 2x/dia
+                    - Treino aeróbico (CEVIS) 30min/dia com resistência
+                    - Exercícios isométricos para carga óssea vertebral
+                    - Caminhada com colete lastrado (70% do peso corporal)
+                    - Treino de equilíbrio e propriocepção para prevenção de quedas
+                    """;
+        }
+        return """
+                Protocolo NASA de nutrição para preservação óssea:
+                - Cálcio: 1.200–1.500mg/dia (alimentos + suplemento)
+                - Vitamina D3: 2.000–4.000 UI/dia
+                - Vitamina K2 (MK-7): 200mcg/dia para fixação de cálcio
+                - Proteína: 1,2–1,5g/kg/dia para manutenção da massa óssea
+                - Magnésio: 400mg/dia
+                - Ômega-3: 2g/dia (ação anti-inflamatória)
+                - Evitar: sódio >2g/dia, cafeína >400mg/dia, álcool
+                """;
+    }
+
+    // ─── Geração do plano com Tooling ────────────────────────────────────────
+
+    public String gerarDescricao(Avaliacao avaliacao, CategoriaPlano categoria) {
+        String userPrompt = "Gere um plano de %s para o paciente ID=%d (score atual: %.1f, classificação: %s). Use as ferramentas para buscar perfil, histórico e o protocolo NASA da categoria."
+                .formatted(categoria.name(), avaliacao.getPaciente().getId(),
+                        avaliacao.getScoreRisco(), avaliacao.getClassificacao());
+
+        logger.info("Gerando plano via Spring AI Tooling — avaliacao_id={} categoria={}", avaliacao.getId(), categoria);
+
+        return chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userPrompt)
+                .toolCallbacks(ToolCallbacks.from(this))
+                .call()
+                .content();
+    }
+}
