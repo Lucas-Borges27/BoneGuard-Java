@@ -64,6 +64,8 @@
 | API REST + boas práticas | Controllers com DTOs, interfaces de service, exception handler global (`GlobalExceptionHandler`) |
 | Persistência relacional | Oracle 19c via Spring Data JPA — todas as entidades mapeadas |
 | Spring Security + JWT | `JwtAuthenticationFilter`, `JwtService`, rotas `/auth/**` e `/rag/**` públicas |
+| Controle de acesso por role | `ROLE_ADMIN` (médico) e `ROLE_USER` (paciente) — restrição via `SecurityConfig` + `@PreAuthorize` |
+| Flyway | Migrations versionadas (`V1` DDL · `V2` ALTER TABLE · `V3` seed) — schema criado e populado automaticamente na inicialização |
 | HATEOAS | Todos os 6 controllers de domínio retornam `_links` via `RepresentationModel` |
 | Cache | `@Cacheable("planos-paciente")` + `@CacheEvict` em `PlanoSaudeServiceImpl` |
 | CORS | `CorsConfig` com origens configuráveis via `cors.allowed-origins` |
@@ -109,9 +111,11 @@ POST /auth/login      Body: { "email": "...", "senha": "..." }
 
 ### Pacientes `(Bearer token obrigatório)`
 ```
+GET    /pacientes              ← ADMIN apenas
 POST   /pacientes
 GET    /pacientes/{id}
 PUT    /pacientes/{id}
+DELETE /pacientes/{id}         ← ADMIN apenas
 ```
 
 ### Avaliações
@@ -174,9 +178,16 @@ GET    /actuator/health
 ### Pré-requisitos
 - JDK 17+
 - Maven 3.8+
-- Oracle 19c+ com as tabelas criadas — `db/ddl/01_create_tables.sql` + `db/dml/02_insert_data.sql`
+- Oracle 19c+ acessível — **as tabelas são criadas automaticamente pelo Flyway na primeira inicialização**
 - RabbitMQ 3.13+
 - Chave Groq gratuita em [console.groq.com](https://console.groq.com)
+
+### Usuários seed (criados pelo Flyway automaticamente)
+
+| Role | E-mail | Senha |
+|------|--------|-------|
+| `ADMIN` | `admin@boneguard.com` | `admin123` |
+| `USER` | `paciente@boneguard.com` | `user123` |
 
 ### 1. Subir com Docker Compose
 
@@ -223,9 +234,17 @@ mvn spring-boot:run
 ## Fluxo Completo — Exemplo
 
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+# Login como admin
+TOKEN_ADMIN=$(curl -s -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"medico@boneguard.com","senha":"senha123"}' | jq -r .token)
+  -d '{"email":"admin@boneguard.com","senha":"admin123"}' | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+# Login como paciente
+TOKEN_USER=$(curl -s -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"paciente@boneguard.com","senha":"user123"}' | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+TOKEN=$TOKEN_ADMIN  # usar admin para os exemplos abaixo
 
 # Cadastrar paciente
 curl -s -X POST http://localhost:8080/pacientes \

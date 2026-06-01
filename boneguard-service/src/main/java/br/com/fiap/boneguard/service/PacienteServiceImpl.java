@@ -7,6 +7,7 @@ import br.com.fiap.boneguard.repositories.PacienteRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 class PacienteServiceImpl implements PacienteService {
@@ -36,6 +37,19 @@ class PacienteServiceImpl implements PacienteService {
         Paciente paciente = buscarPorId(id);
         preencherDados(paciente, request);
         return pacienteRepository.save(paciente);
+    }
+
+    @Override
+    public List<Paciente> listarTodos() {
+        return pacienteRepository.findAll();
+    }
+
+    @Override
+    public void deletar(Long id) {
+        if (!pacienteRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Paciente", id);
+        }
+        pacienteRepository.deleteById(id);
     }
 
     private void preencherDados(Paciente paciente, PacienteRequest request) {

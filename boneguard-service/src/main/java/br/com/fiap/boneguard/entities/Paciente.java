@@ -49,6 +49,9 @@ public class Paciente {
     @Column(name = "senha", length = 200)
     private String senha;
 
+    @Column(name = "role", nullable = false, length = 10)
+    private String role = "USER";
+
     public Paciente() {
     }
 
@@ -84,4 +87,7 @@ public class Paciente {
 
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }

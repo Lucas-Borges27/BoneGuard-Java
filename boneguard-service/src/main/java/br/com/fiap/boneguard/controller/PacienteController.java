@@ -12,10 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -32,6 +34,20 @@ public class PacienteController {
 
     public PacienteController(PacienteService pacienteService) {
         this.pacienteService = pacienteService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "[ADMIN] Listar todos os pacientes", description = "Retorna todos os pacientes cadastrados — acesso restrito ao administrador")
+    public ResponseEntity<List<PacienteResponse>> listar() {
+        List<PacienteResponse> lista = pacienteService.listarTodos().stream()
+                .map(p -> {
+                    PacienteResponse r = PacienteResponse.from(p);
+                    adicionarLinks(r);
+                    return r;
+                })
+                .toList();
+        return ResponseEntity.ok(lista);
     }
 
     @PostMapping
@@ -64,6 +80,15 @@ public class PacienteController {
         PacienteResponse response = PacienteResponse.from(paciente);
         adicionarLinks(response);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "[ADMIN] Remover paciente", description = "Remove um paciente pelo id — acesso restrito ao administrador")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        pacienteService.deletar(id);
+        logger.info("Paciente removido id={}", id);
+        return ResponseEntity.noContent().build();
     }
 
     private void adicionarLinks(PacienteResponse response) {

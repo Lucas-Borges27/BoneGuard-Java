@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
@@ -31,7 +33,8 @@ public class PlanoAIService {
     private final PacienteRepository pacienteRepository;
     private final AvaliacaoRepository avaliacaoRepository;
 
-    public PlanoAIService(ChatClient.Builder builder,
+    @Autowired
+    public PlanoAIService(@Lazy ChatClient.Builder builder,
                           PacienteRepository pacienteRepository,
                           AvaliacaoRepository avaliacaoRepository) {
         this.chatClient = builder.build();
