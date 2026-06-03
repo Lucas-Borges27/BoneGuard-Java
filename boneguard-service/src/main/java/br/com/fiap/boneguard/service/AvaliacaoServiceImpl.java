@@ -74,12 +74,14 @@ class AvaliacaoServiceImpl implements AvaliacaoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Avaliacao buscarPorId(Long id) {
         return avaliacaoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Avaliação", id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Avaliacao> buscarHistoricoPorPaciente(Long pacienteId) {
         if (!pacienteRepository.existsById(pacienteId)) {
             throw new ResourceNotFoundException("Paciente", pacienteId);
