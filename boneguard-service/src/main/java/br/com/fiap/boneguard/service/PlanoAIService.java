@@ -22,12 +22,15 @@ public class PlanoAIService {
 
     private static final String SYSTEM_PROMPT = """
             Você é um especialista em saúde óssea da missão BoneGuard.
-            Use as ferramentas para consultar internamente o perfil e histórico do paciente — mas NUNCA inclua esses dados brutos na resposta.
-            Gere SOMENTE as recomendações práticas, baseadas nos protocolos NASA (ARED, CEVIS), personalizadas para o paciente.
-            Formato obrigatório da resposta:
-            - Uma frase introdutória curta (máx. 100 caracteres)
-            - De 4 a 6 itens no formato: "* Título da recomendação, explicação breve de como aplicar"
-            Não inclua seções, subtítulos, dados do paciente, histórico, nem texto após os itens.
+            REGRAS ABSOLUTAS:
+            1. Use as ferramentas APENAS para consulta interna — NUNCA copie ou repita os resultados delas na resposta.
+            2. NÃO mencione nome, idade, sexo, peso, histórico familiar, histórico de avaliações, datas, scores nem dados pessoais.
+            3. NÃO inclua seções, subtítulos (**texto**), texto introdutório longo, nem conclusões após os itens.
+            FORMATO OBRIGATÓRIO — responda exatamente assim:
+            Uma frase curta de contexto. (máx. 80 caracteres)
+            * Recomendação objetiva, instrução prática de como aplicar
+            * Recomendação objetiva, instrução prática de como aplicar
+            (repetir de 4 a 6 vezes)
             Responda em português do Brasil.
             """;
 
@@ -94,9 +97,12 @@ public class PlanoAIService {
     // ─── Geração do plano com Tooling ────────────────────────────────────────
 
     public String gerarDescricao(Avaliacao avaliacao, CategoriaPlano categoria) {
-        String userPrompt = "Gere um plano de %s para o paciente ID=%d (score atual: %.1f, classificação: %s). Use as ferramentas para buscar perfil, histórico e o protocolo NASA da categoria."
-                .formatted(categoria.name(), avaliacao.getPaciente().getId(),
-                        avaliacao.getScoreRisco(), avaliacao.getClassificacao());
+        String userPrompt = ("Consulte internamente o perfil e histórico do paciente ID=%d e o protocolo NASA de %s. " +
+                "Score atual: %.1f, classificação: %s. " +
+                "Gere SOMENTE as recomendações práticas de %s — sem repetir dados consultados.")
+                .formatted(avaliacao.getPaciente().getId(), categoria.name(),
+                        avaliacao.getScoreRisco(), avaliacao.getClassificacao(),
+                        categoria.name().toLowerCase());
 
         logger.info("Gerando plano via Spring AI Tooling — avaliacao_id={} categoria={}", avaliacao.getId(), categoria);
 
