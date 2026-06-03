@@ -13,6 +13,6 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
     @Query("SELECT a FROM Avaliacao a JOIN FETCH a.paciente WHERE a.id = :id")
     Optional<Avaliacao> findByIdWithPaciente(@Param("id") Long id);
 
-    @Query("SELECT a FROM Avaliacao a JOIN FETCH a.paciente WHERE a.paciente.id = :pacienteId ORDER BY a.dataAvaliacao DESC")
+    @Query("SELECT a FROM Avaliacao a JOIN FETCH a.paciente WHERE a.paciente.id = :pacienteId ORDER BY a.dataAvaliacao DESC, a.id DESC")
     List<Avaliacao> findByPacienteIdOrderByDataAvaliacaoDesc(@Param("pacienteId") Long pacienteId);
 }
