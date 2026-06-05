@@ -176,7 +176,7 @@ class AvaliacaoServiceImplTest {
         // Arrange
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setId(5L);
-        when(avaliacaoRepository.findById(5L)).thenReturn(Optional.of(avaliacao));
+        when(avaliacaoRepository.findByIdWithPaciente(5L)).thenReturn(Optional.of(avaliacao));
 
         // Act
         Avaliacao resultado = service.buscarPorId(5L);
@@ -188,9 +188,6 @@ class AvaliacaoServiceImplTest {
     @Test
     @DisplayName("buscarPorId — ID inexistente lança ResourceNotFoundException")
     void buscarPorId_inexistente_lancaNotFound() {
-        // Arrange
-        when(avaliacaoRepository.findById(99L)).thenReturn(Optional.empty());
-
         // Act & Assert
         assertThatThrownBy(() -> service.buscarPorId(99L))
                 .isInstanceOf(ResourceNotFoundException.class);

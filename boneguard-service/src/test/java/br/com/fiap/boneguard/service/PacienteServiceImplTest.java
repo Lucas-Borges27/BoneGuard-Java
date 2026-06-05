@@ -102,9 +102,6 @@ class PacienteServiceImplTest {
     @Test
     @DisplayName("buscarPorId — ID inexistente lança ResourceNotFoundException")
     void buscarPorId_inexistente_lancaException() {
-        // Arrange
-        when(pacienteRepository.findById(99L)).thenReturn(Optional.empty());
-
         // Act & Assert
         assertThatThrownBy(() -> service.buscarPorId(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
