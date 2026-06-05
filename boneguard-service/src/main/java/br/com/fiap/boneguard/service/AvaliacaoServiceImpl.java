@@ -7,7 +7,7 @@ import br.com.fiap.boneguard.enums.Classificacao;
 import br.com.fiap.boneguard.exception.ResourceNotFoundException;
 import br.com.fiap.boneguard.exception.ValidationException;
 import br.com.fiap.boneguard.external_interface.rabbitmq.AlertaEvent;
-import br.com.fiap.boneguard.external_interface.rabbitmq.AlertaPublisher;
+import br.com.fiap.boneguard.external_interface.rabbitmq.AlertaPublisherPort;
 import br.com.fiap.boneguard.repositories.AvaliacaoRepository;
 import br.com.fiap.boneguard.repositories.PacienteRepository;
 import org.slf4j.Logger;
@@ -27,11 +27,11 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
 
     private final AvaliacaoRepository avaliacaoRepository;
     private final PacienteRepository pacienteRepository;
-    private final AlertaPublisher alertaPublisher;
+    private final AlertaPublisherPort alertaPublisher;
 
     public AvaliacaoServiceImpl(AvaliacaoRepository avaliacaoRepository,
                                 PacienteRepository pacienteRepository,
-                                AlertaPublisher alertaPublisher) {
+                                AlertaPublisherPort alertaPublisher) {
         this.avaliacaoRepository = avaliacaoRepository;
         this.pacienteRepository = pacienteRepository;
         this.alertaPublisher = alertaPublisher;
@@ -69,12 +69,16 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
                     "ALERTA ALTO RISCO: " + paciente.getNome() + " apresenta score " + request.scoreRisco() + ". Consulta médica urgente recomendada.",
                     LocalDate.now()
             );
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    alertaPublisher.publicar(event);
-                }
-            });
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        alertaPublisher.publicar(event);
+                    }
+                });
+            } else {
+                alertaPublisher.publicar(event);
+            }
         }
 
         return salva;

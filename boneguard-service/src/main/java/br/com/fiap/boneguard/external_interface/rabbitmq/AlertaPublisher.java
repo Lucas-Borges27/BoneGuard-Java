@@ -8,7 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AlertaPublisher {
+public class AlertaPublisher implements AlertaPublisherPort {
 
     private static final Logger logger = LoggerFactory.getLogger(AlertaPublisher.class);
 

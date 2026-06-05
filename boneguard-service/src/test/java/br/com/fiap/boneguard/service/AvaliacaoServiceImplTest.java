@@ -8,7 +8,7 @@ import br.com.fiap.boneguard.enums.NivelAtividade;
 import br.com.fiap.boneguard.enums.Sexo;
 import br.com.fiap.boneguard.exception.ResourceNotFoundException;
 import br.com.fiap.boneguard.exception.ValidationException;
-import br.com.fiap.boneguard.external_interface.rabbitmq.AlertaPublisher;
+import br.com.fiap.boneguard.external_interface.rabbitmq.AlertaPublisherPort;
 import br.com.fiap.boneguard.repositories.AvaliacaoRepository;
 import br.com.fiap.boneguard.repositories.PacienteRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +34,7 @@ class AvaliacaoServiceImplTest {
 
     @Mock private AvaliacaoRepository avaliacaoRepository;
     @Mock private PacienteRepository pacienteRepository;
-    @Mock private AlertaPublisher alertaPublisher;
+    @Mock private AlertaPublisherPort alertaPublisher;
 
     @InjectMocks private AvaliacaoServiceImpl service;
 
