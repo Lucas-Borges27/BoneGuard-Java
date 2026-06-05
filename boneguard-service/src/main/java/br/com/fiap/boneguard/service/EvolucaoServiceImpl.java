@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-class EvolucaoServiceImpl implements EvolucaoService {
+public class EvolucaoServiceImpl implements EvolucaoService {
 
     private final EvolucaoRepository evolucaoRepository;
     private final PacienteRepository pacienteRepository;

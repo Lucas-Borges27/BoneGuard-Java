@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-class AvaliacaoServiceImpl implements AvaliacaoService {
+public class AvaliacaoServiceImpl implements AvaliacaoService {
 
     private static final Logger logger = LoggerFactory.getLogger(AvaliacaoServiceImpl.class);
 

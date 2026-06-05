@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-class AlertaServiceImpl implements AlertaService {
+public class AlertaServiceImpl implements AlertaService {
 
     private static final Logger logger = LoggerFactory.getLogger(AlertaServiceImpl.class);
 

@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-class PlanoSaudeServiceImpl implements PlanoSaudeService {
+public class PlanoSaudeServiceImpl implements PlanoSaudeService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanoSaudeServiceImpl.class);
 

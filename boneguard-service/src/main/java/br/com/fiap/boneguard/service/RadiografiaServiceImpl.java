@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 
 @Service
-class RadiografiaServiceImpl implements RadiografiaService {
+public class RadiografiaServiceImpl implements RadiografiaService {
 
     private static final Logger logger = LoggerFactory.getLogger(RadiografiaServiceImpl.class);
 

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
 @Service
-class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl implements AuthService {
 
     private final PacienteRepository pacienteRepository;
     private final PasswordEncoder passwordEncoder;
